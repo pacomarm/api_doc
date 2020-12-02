@@ -1,0 +1,53 @@
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #f0f2f5;
+}
+
+code {
+  font-family: 'Fira Code';
+}
+
+table tr {
+  background-color: transparent !important;
+}
+
+.redoc-wrap {
+  color: #000 !important;
+}
+
+.menu-content {
+  .scrollbar-container {
+    div {
+      display: none;
+    }
+  }
+}
+
+.token {
+  &.string {
+    color: #0f0 !important;
+    &.property {
+      color: #fff !important;
+    }
+  }
+  &.variable {
+    color: #e5c07b !important;
+  }
+  &.number {
+    color: #f00 !important;
+  }
+  &.operator {
+    color: #56b5c2 !important;
+  }
+  &.keyword {
+    color: #e06c75 !important;
+  }
+  &.function {
+    color: #98c379 !important;
+  }
+  &.class-name {
+    color: #61afef !important;
+  }
+}

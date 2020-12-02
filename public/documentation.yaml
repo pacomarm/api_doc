@@ -1,0 +1,1609 @@
+openapi: 3.0.0
+info:
+  version: V1
+  title: IM-Sys API
+  x-logo:
+    url: https://lnx1.metricamovil.com/assets/mm-dev.png
+  description: >-
+    # Introduction
+
+    **Welcome to the IM-Sys API Reference**
+
+
+    Here you will find everything you need to know in order to employ the IM-Sys API.
+
+    # Getting Started
+
+    ## Usage
+
+    In order to use the API, you first need a Token (**JSONWebToken**).
+
+
+    To do that, you need to call the [Login](#operation/Auth_Login) method.
+
+
+    ## Requests and Responses
+
+    ### Success responses
+
+    All the methods includes an example for the success responses, so you can handle each response based on that.
+
+    The response samples may include multiple message errors in the Doc, but there's the possibility to get only one,
+
+    you can identify when the Doc includes more than one error because it has a **|** symbol on the message property.
+
+
+    Like this:
+
+
+        'message 1 | message 2 | message 3'
+
+    ### Error responses
+
+    The API uses 6 types of errors, depending on what is wrong, you can see the next table to handle those errors
+
+    and fix your code or report to the email about any error in the operation, the error response includes a message property
+
+    where you can find out more information about the error.
+
+
+    | Error               | Why?                                                               | How to fix?                                                     |
+
+    | ------------------- |------------------------------------------------------------------- | --------------------------------------------------------------- |
+
+    | ValidationError     | The request body or query does not meet the validations            | Make sure you send the information correctly                    |
+
+    | UnauthorizedError   | The Authorization token was not found or credentials are incorrect | Make sure you send the Auth Token, check the credentials        |
+
+    | NotFoundError       | The resource were not found in Geotab                              | Make sure the data exists in Geotab                             |
+
+    | InvalidUserError    | Geotab credentials error                                           | Contact Métrica Móvil's support to check the user is not locked |
+
+    | GeneralError        | Conflict with something (Unknown reason)                           | Contact Métrica Móvil's developers at the email of this Doc     |
+
+    | InternalServerError | API is down or server is busy                                      | Contact Métrica Móvil's developers at the email of this Doc     |
+  contact:
+    email: sistemas@metricamovil.com
+tags:
+- name: Authentication
+  description: Authentication of the user
+- name: Devices
+  description: Operations involving the creation, deletion, modification and retrieval of devices
+- name: Events
+  description: Operations involving the creation and retrieval of events
+- name: Groups
+  description: Operations involving the creation, deletion, modification and retrieval of groups
+- name: Positions
+  description: Operations involving the creation and retrieval of positions
+- name: Trips
+  description: Operations involving the creation, deletion, modification and retrieval of trips
+- name: Users
+  description: Operations involving the creation, deletion, modification and retrieval of users
+schemes:
+ - https
+paths:
+  /login:
+    post:
+      tags:
+      - Authentication
+      summary: Authentication of the user
+      description: User authentication
+      operationId: login
+      produces:
+      - application/json
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/definitions/Login'
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/definitions/loginResponse'
+        400:
+          description: Bad Request
+  /devices:
+    get:
+      tags:
+      - Devices
+      summary: Get list of registered devices
+      operationId: getAllDev
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: query
+        name: session_token
+        description: The user's session token to be validated.
+        required: true
+        type: string
+      - in: query
+        name: id
+        description: ID of an specific device.
+        type: integer
+        format: int10
+        default: null
+      - in: query
+        name: serialNumber
+        description: Serial number of an specific device.
+        type: string
+        default: null
+      - in: query
+        name: groupId
+        description: ID of an specific device.
+        type: integer
+        format: int10
+        default: null
+      - in: query
+        name: limit
+        description: Maximum amount of entries that will be retrieved.
+        type: integer
+        format: int10
+        default: 1000
+      - in: query
+        name: offset
+        description: Makes the selection start from a specified entry.
+        type: integer
+        format: int10
+        default: 0
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/definitions/DevicesArray'
+        400:
+          description: Invalid ID supplied
+    post:
+      tags:
+      - Devices
+      summary: Register a new device
+      operationId: addDev
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/definitions/Device'
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/definitions/getDeviceResponse'
+        405:
+          description: Invalid input
+        409: 
+          description: A device with that ID already exists
+  /devices/{deviceId}:
+    put:
+      tags:
+      - Devices
+      summary: Update an existing device's entry
+      operationId: editDev
+      consumes:
+      - application/json
+      - application/xml
+      produces:
+      - application/json
+      - application/xml
+      parameters:
+      - name: deviceId
+        in: path
+        description: ID of the device whose information will be modified
+        required: true
+        type: integer
+        format: int10
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/definitions/Device'
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/definitions/getDeviceResponse'
+        400:
+          description: Invalid ID supplied
+    delete:
+      tags:
+      - Devices
+      summary: Delete an existing device
+      operationId: deleteDev
+      produces:
+      - application/json
+      - application/xml
+      parameters:
+      - name: deviceId
+        in: path
+        description: ID of device to delete
+        required: true
+        type: integer
+        format: int10
+      - in: query
+        name: session_token
+        description: The session token to be validated.
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/definitions/getDeviceResponse'
+        400:
+          description: Invalid ID supplied
+  /events:
+    get:
+      tags:
+      - Events
+      summary: Get list of registered events
+      operationId: getEventByGET
+      produces:
+      - application/json
+      parameters:
+      - in: query
+        name: session_token
+        description: The user's session token to be validated.
+        required: true
+        type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/definitions/getEvent'
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/definitions/getEventResponse'
+        400:
+          description: Bad Request
+        404:
+          description: Event not found
+    post:
+      tags:
+      - Events
+      summary: Register new events
+      description: POST for creating a new event
+      operationId: createEvent
+      produces:
+      - application/json
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/definitions/Events'
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/definitions/postEventResponse'
+        400:
+          description: Bad Request
+  /groups:
+    get:
+      tags:
+      - Groups
+      summary: Get list of all registered groups
+      operationId: getGroup
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: query
+        name: session_token
+        description: The user's session token to be validated.
+        required: true
+        type: string
+      - in: query
+        name: groupId
+        description: ID of a specific group.
+        type: integer
+        format: int10
+        default: null
+      - in: query
+        name: groupName
+        description: Name of a specific group.
+        type: string
+        default: null
+      - in: query
+        name: groupParent
+        description: ID of the parent group.
+        type: integer
+        format: int10
+        default: null
+      - in: query
+        name: limit
+        description: Maximum amount of entries that will be retrieved.
+        type: integer
+        format: int10
+        default: 1000
+      - in: query
+        name: offset
+        description: Makes the selection start from a specified entry.
+        type: integer
+        format: int10
+        default: 0
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/definitions/DevicesArray'
+        400:
+          description: Invalid ID supplied
+    post:
+      tags:
+      - Groups
+      summary: Register a new group
+      operationId: postGroup
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: body
+        name: body
+        description: Required JSON structure to register a new group 
+        required: true
+        schema:
+          $ref: '#/definitions/Group'
+      responses:
+        200: 
+          description: Group created successfully 
+          schema:
+            $ref: '#/definitions/getDeviceResponse'
+        405:
+          description: Invalid input
+        409: 
+          description: A device with that ID already exists
+  /groups/{groupId}:
+    put:
+      tags:
+      - Groups
+      summary: Update an existing group's entry
+      operationId: putGroup
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - name: groupId
+        in: path
+        description: ID of the group whose information will be modified
+        required: true
+        type: integer
+        format: int10
+      - in: body
+        name: body
+        description: Required JSON structure to update a group's entry 
+        required: true
+        schema:
+          $ref: '#/definitions/putGroup'
+      responses:
+        200: 
+          description: Group updated successfully 
+          schema:
+            $ref: '#/definitions/getDeviceResponse'
+        400:
+          description: Invalid ID supplied
+    delete:
+      tags:
+      - Groups
+      summary: Delete an existing group
+      operationId: deleteGroup
+      produces:
+      - application/json
+      parameters:
+      - in: query
+        name: session_token
+        description: The session token to be validated.
+        required: true
+        type: string
+      - name: groupId
+        in: path
+        description: ID of group to delete
+        required: true
+        type: integer
+        format: int10
+      responses:
+        200: 
+          description: Group was deleted successfully 
+          schema:
+            $ref: '#/definitions/getDeviceResponse'
+        400:
+          description: Invalid ID supplied
+  /positions:
+    get:
+      tags:
+      - Positions
+      summary: Get list of registered positions of existing devices
+      operationId: getPositions
+      produces:
+      - application/json
+      - application/xml
+      parameters:
+      - in: query
+        name: session_token
+        description: The user's session token to be validated.
+        required: true
+        type: string
+      - in: query
+        name: fromDate
+        description: Starting date
+        type: string
+        format: date
+        required: true
+      - in: query
+        name: toDate
+        description: Finishing date
+        type: string
+        format: date
+        required: true
+      - in: query
+        name: deviceId
+        description: ID of a specific device.
+        type: integer
+        format: int10
+        default: null
+      - in: query
+        name: serialNumber
+        description: Serial number of a specific device.
+        type: string
+        default: null
+      - in: query
+        name: deviceName
+        description: Name of a specific device.
+        type: string
+        default: null
+      - in: query
+        name: deviceGroup
+        description: Group to which a device belongs to.
+        type: integer
+        format: int10
+        default: null
+      - in: query
+        name: limit
+        description: Limit of retrieved entries.
+        type: integer
+        format: int10
+        default: 1000
+      - in: query
+        name: offset
+        description: Offset of retrieved entried
+        type: integer
+        format: int10
+        default: 0
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/definitions/getPositionResponse'
+        400:
+          description: Bad Request
+        404:
+          description: Event not found
+    post:
+      tags:
+      - Positions
+      summary: Register new Position
+      operationId: createPosition
+      produces:
+      - application/json
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/definitions/Position'
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/definitions/postPositionResponse'
+        400:
+          description: Bad Request
+  /trips:
+    get:
+      tags:
+      - Trips
+      summary: Get list of all trips made by a device or by a group of devices
+      operationId: getTrips
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      parameters:
+      - in: query
+        name: session_token
+        description: The user's session token to be validated.
+        required: true
+        type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/definitions/getTrip'
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/definitions/TripsArray'
+        404:
+          description: A list of trips linked to the specified ID was not found
+    post:
+      tags:
+      - Trips
+      summary: Register a new trip
+      operationId: addTrip
+      consumes:
+      - application/json
+      - application/xml
+      produces:
+      - application/json
+      - application/xml
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/definitions/Trip'
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/definitions/postTripResponse'
+        405:
+          description: Invalid input
+        409: 
+          description: A trip with that ID already exists
+    put:
+      tags:
+      - Trips
+      summary: Update an existing trip's entry
+      operationId: editTrip
+      consumes:
+      - application/json
+      - application/xml
+      produces:
+      - application/json
+      - application/xml
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/definitions/putTrip'
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/definitions/postTripResponse'
+        400:
+          description: Invalid ID supplied
+  /trips/{id}:
+    delete:
+      tags:
+      - Trips
+      summary: Delete an existing trip
+      operationId: deleteTrip
+      produces:
+      - application/json
+      parameters:
+      - in: query
+        name: session_token
+        description: The user's session token to be validated.
+        required: true
+        type: string
+      - name: id
+        in: path
+        description: ID of trip to delete
+        required: true
+        type: integer
+        format: int10
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/definitions/postTripResponse'
+        400:
+          description: Invalid ID supplied
+  /users:
+    get:
+      tags:
+      - Users
+      summary: Get list of users
+      operationId: getUserByName
+      produces:
+      - application/json
+      parameters:
+      - in: query
+        name: session_token
+        description: The user's session token to be validated.
+        required: true
+        type: string
+      - in: query
+        name: id
+        description: ID of an specific user.
+        type: integer
+        format: int10
+        default: null
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/definitions/UserArray'
+        400:
+          description: Invalid username supplied
+        404:
+          description: User not found
+    post:
+      tags:
+      - Users
+      summary: Create user
+      description: POST operation to create user.
+      operationId: createUser
+      produces:
+      - application/json
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/definitions/User'
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/definitions/loginResponse'
+  /users/{id}:
+    put:
+      tags:
+      - Users
+      summary: Update user by id
+      description: PUT operation to update user.
+      operationId: updateUser
+      produces:
+      - application/json
+      parameters:
+      - name: id
+        in: path
+        description: id of the user to update
+        required: true
+        type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/definitions/putUser'
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/definitions/putUserResponse'
+        400:
+          description: Invalid user supplied
+        404:
+          description: User not found
+    delete:
+      tags:
+      - Users
+      summary: Delete user by id
+      description: DELETE operation to delete user.
+      operationId: deleteUser
+      produces:
+      - application/json
+      - application/xml
+      parameters:
+      - in: query
+        name: session_token
+        description: The user's session token to be validated.
+        required: true
+        type: string
+      - name: id
+        in: path
+        description: The id of the user to be deleted
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/definitions/putUserResponse'
+        400:
+          description: Invalid username supplied
+        404:
+          description: User not found
+definitions:
+  Login:
+    type: object
+    properties:
+      user:
+        type: string
+      password:
+        type: string
+  loginResponse:
+    type: object
+    properties:
+      ok: 
+        type: boolean
+        example: "true"
+      data:
+        type: object
+        properties:
+          userId:
+            type: string
+            example: "77a"
+          userName:
+            type: string
+            example: "77a"
+          customerId:
+            type: integer
+            format: int10
+            example: 1
+          roleId:
+            type: integer
+            format: int10
+            example: 1
+          hash:
+            type: string
+            example: "77a"
+          hashDatetime:
+            type: string
+            format: date
+            example: "2020-11-11T17:59:14"
+          active: 
+            type: boolean
+            example: true
+          logDatetime:
+            type: string
+            format: date
+            example: "2020-11-11T17:59:14"
+          logUserId:
+            type: string
+            example: "Master.DBA"
+          logActionId:
+            type: integer
+            format: int10
+            example: 1
+          sessionToken:
+            type: string
+            example: "Master.DBA"
+          sessionDatetime:
+            type: string
+            format: date
+            example: "2020-11-11T17:59:14"
+          sessionExpiration:
+            type: string
+            format: date
+            example: "2020-11-11T17:59:14"
+  User:
+    type: object
+    properties:
+      session_token:
+        type: string
+      userId:
+        type: string
+      userName:
+        type: string
+      userPassword:
+        type: string
+      customerName:
+        type: string
+  putUser:
+    type: object
+    properties:
+      session_token:
+        type: string
+      userName:
+        type: string
+      customerId:
+        type: integer
+        format: int10
+      roleId:
+        type: integer
+        format: int10
+        default: 5
+      hash:
+        type: string
+  putUserResponse:
+    type: object
+    properties:
+      ok: 
+        type: boolean
+        example: "true"
+      data:
+          type: string
+          example: "user1"
+  Events:
+    type: object
+    properties:
+      session_token:
+        type: string
+      serialNumber:
+        type: string
+      dateTime:
+        type: string
+        format: date
+      latitude:
+        type: number
+        format: float
+      longitude:
+        type: number
+        format: float
+      key:
+        type: string
+      keyType:
+        type: string
+      speed:
+        type: number
+        format: float
+      bearing:
+        type: number
+        format: float
+      distance:
+        type: number
+        format: float
+      driving:
+        type: number
+        format: float
+      duration:
+        type: number
+        format: float
+    required:
+      - fecha
+      - latitud
+      - longitude
+      - id_dispositivo
+      - tipo_evento
+    xml:
+      name: User
+  getEvent:
+    type: object
+    properties:
+      fromDate:
+        type: string
+        format: date
+      toDate:
+        type: string
+        format: date
+      deviceId:
+        type: array
+        items:
+          type: integer
+          format: int10
+      limit: 
+        type: integer
+        format: int10
+        default: 1000
+      offset: 
+        type: integer
+        format: int10
+        default: 0
+  getEventResponse:
+    type: object
+    properties:
+      ok: 
+        type: boolean
+        example: "true"
+      data:
+          type: array
+          items: 
+            type: object
+            properties:
+              serialNumber:
+                type: string
+              deviceName:
+                type: string
+              deviceId:
+                type: integer
+                format: int10
+              dataDatetime:
+                type: string
+                format: date
+                example: "2020-11-11T17:59:14"
+              dataLatitude: 
+                type: number
+                format: float
+              dataLongitude: 
+                type: number
+                format: float
+              dataKey:
+                type: string
+              dataKeyType:
+                type: string
+              dataSpeed:
+                type: number
+                format: float
+              dataBearing:
+                type: number
+                format: float
+              dataDistance:
+                type: number
+                format: float
+              dataDriving:
+                type: number
+                format: float
+              dataDuration:
+                type: number
+                format: float
+  postEventResponse:
+    type: object
+    properties:
+      ok: 
+        type: boolean
+        example: "true"
+      data:
+          type: object
+          properties: 
+            deviceId:
+              type: integer
+              format: int10
+            dataDatetime:
+              type: string
+              format: date
+              example: "2020-11-11T17:59:14"
+            dataLatitude: 
+              type: number
+              format: float
+            dataLongitude: 
+              type: number
+              format: float
+            dataKey:
+              type: string
+            dataKeyType:
+              type: string
+            dataSpeed:
+              type: number
+              format: float
+            dataBearing:
+              type: number
+              format: float
+            dataDistance:
+              type: number
+              format: float
+            dataDriving:
+              type: number
+              format: float
+            dataDuration:
+              type: number
+              format: float 
+            active:
+              type: boolean
+            logDatetime:
+              type: string
+              format: date
+              example: "2020-11-11T17:59:14"
+  Group:
+    type: object
+    properties:
+      session_token:
+        type: string
+      name:
+        type: string
+      parentId:
+        type: integer
+        format: int10
+  putGroup:
+    type: object
+    properties:
+      session_token:
+        type: string
+      groupId:
+        type: integer
+        format: int10
+      name:
+        type: string
+      parentId:
+        type: integer
+        format: int10
+  Device:
+    type: object
+    properties:
+      session_token:
+        type: string
+      serialNumber:
+        type: string
+      serialNumberCut:
+        type: string
+      deviceName:
+        type: string
+      deviceTypeId:
+        type: integer
+        format: int10
+      deviceModelId:
+        type: integer
+        format: int10
+      groupId:
+        type: integer
+        format: int10
+      deviceModelVersion:
+        type: string
+      deviceSwVersion:
+        type: string
+  DevicesArray:
+    type: array
+    items: 
+      type: object
+      properties:
+        deviceId:
+          type: integer
+          format: int10
+        serialNumber:
+          type: string
+        serialNumberCut:
+          type: string
+        deviceName:
+          type: string
+        deviceModelId:
+          type: integer
+          format: int10
+        deviceTypeId:
+          type: integer
+          format: int10
+        deviceGroupId:
+          type: integer
+          format: int10
+        deviceModelVersion:
+          type: string
+        deviceSwVersion:
+          type: string
+        groupId:
+          type: integer
+          format: int10
+  getTrip:
+    type: object
+    properties:
+      fromDate:
+        type: string
+        format: date
+      toDate:
+        type: string
+        format: date
+      deviceIds:
+        type: array
+        items:
+          type: integer
+          format: int10
+        default: null
+      tripId: 
+        type: integer
+        format: int10
+        default: null
+      limit: 
+        type: integer
+        format: int10
+        default: 1000
+      offset: 
+        type: integer
+        format: int10
+        default: 0
+  Trip:
+    type: object
+    properties:
+      session_token:
+        type: string
+      deviceId:
+        type: integer
+        format: int10
+      departureTime:
+        type: string
+        format: date-time
+      initialLatitude: 
+        type: number
+        format: float
+      initialLongitude: 
+        type: number
+        format: float
+      initialPlace:
+        type: string
+      arrivalTime:
+        type: string
+        format: time
+      finalLatitude: 
+        type: number
+        format: float
+      finalLongitude: 
+        type: number
+        format: float
+      finalPlace:
+        type: string
+  putTrip:
+    type: object
+    properties:
+      session_token:
+        type: string
+      id:
+        type: integer
+        format: int10
+      deviceId:
+        type: integer
+        format: int10
+      departureTime:
+        type: string
+        format: date-time
+      initialLatitude: 
+        type: number
+        format: float
+      initialLongitude: 
+        type: number
+        format: float
+      initialPlace:
+        type: string
+      arrivalTime:
+        type: string
+        format: time
+      finalLatitude: 
+        type: number
+        format: float
+      finalLongitude: 
+        type: number
+        format: float
+      finalPlace:
+        type: string
+  TripsArray:
+    type: object
+    properties:
+      ok: 
+        type: boolean
+        example: "true"
+      data:
+          type: array
+          items: 
+            type: object
+            properties:
+              tripId:
+                type: integer
+                format: int10
+              deviceId:
+                type: integer
+                format: int10
+              initialDatetime:
+                type: string
+                format: date
+                example: "2020-11-11T17:59:14"
+              initialLatitude: 
+                type: number
+                format: float
+              initialLongitude: 
+                type: number
+                format: float
+              initialPlace:
+                type: string
+              finalDatetime:
+                type: string
+                format: date
+                example: "2020-11-11T17:59:14"
+              finalLatitude: 
+                type: number
+                format: float
+              finalLongitude: 
+                type: number
+                format: float
+              finalPlace:
+                type: string
+  postTripResponse:
+    type: object
+    properties:
+      ok: 
+        type: boolean
+        example: "true"
+      data:
+          type: object
+          properties:
+            tripId:
+              type: integer
+              format: int10
+            deviceId:
+              type: integer
+              format: int10
+            initialDatetime:
+              type: string
+              format: date
+              example: "2020-11-11T17:59:14"
+            initialLatitude: 
+              type: number
+              format: float
+            initialLongitude: 
+              type: number
+              format: float
+            initialPlace:
+              type: string
+            finalDatetimeEstimated:
+              type: string
+              format: date
+              example: "2020-11-11T17:59:14"
+            finalDatetimeReal:
+              type: string
+              format: date
+              example: "2020-11-11T17:59:14"
+            finalLatitude: 
+              type: number
+              format: float
+            finalLongitude: 
+              type: number
+              format: float
+            finalPlace:
+              type: string
+            status:
+              type: string
+            active:
+              type: boolean
+            logDatetime:
+              type: string
+              format: date
+              example: "2020-11-11T17:59:14"
+            logUserId:
+              type: string
+            logActionId:
+              type: integer
+              format: int10
+  getDeviceResponse:
+    type: object
+    properties:
+      ok: 
+        type: boolean
+        example: "true"
+      data:
+        type: object
+        properties:
+          deviceId:
+            type: integer
+            format: int10
+            example: 136
+          serialNumber:
+            type: string
+            example: "77a"
+          serialNumberCut:
+            type: string
+            example: "77a"
+          active: 
+            type: boolean
+            example: true
+          deviceName:
+            type: string
+            example: "77a"
+          deviceTypeId:
+            type: integer
+            format: int10
+            example: 1
+          deviceModelId:
+            type: integer
+            format: int10
+            example: 1
+          deviceGroupId:
+            type: integer
+            format: int10
+            example: 12
+          deviceModelVersion:
+            type: string
+            example: "1.23"
+          deviceSwVersion:
+            type: string 
+            example: "1.34"
+          logDateTime:
+            type: string
+            format: date
+            example: "2020-11-11T17:59:14"
+          logUserId:
+            type: string
+            example: "Master.DBA"
+          logActionId:
+            type: integer
+            format: int10
+            example: 1
+          groupId:
+            type: integer
+            format: int10
+            example: 1
+  Position:
+    type: object
+    properties:
+      session_token:
+        type: string
+      deviceId:
+        type: integer
+        format: int10
+      dateTime:
+        type: string
+        format: date
+      latitude: 
+        type: number
+        format: float
+      longitude: 
+        type: number
+        format: float
+      speed: 
+        type: number
+        format: float
+  getPositionResponse:
+    type: object
+    properties:
+      ok: 
+        type: boolean
+        example: "true"
+      data:
+          type: array
+          items: 
+            type: object
+            properties:
+              deviceId:
+                type: integer
+                format: int10
+              serialNumber:
+                type: string
+              serialNumberCut:
+                type: string
+              deviceName:
+                type: string
+              deviceModelVersion:
+                type: string
+              deviceSwVersion:
+                type: string
+              deviceGroupId:
+                type: integer
+                format: int10
+              dataDatetime:
+                type: string
+                format: date
+                example: "2020-11-11T17:59:14"
+              dataLatitude: 
+                type: number
+                format: float
+              dataLongitude: 
+                type: number
+                format: float
+              deviceTypeId:
+                type: integer
+                format: int10
+              deviceTypeDescription:
+                type: string
+              deviceModelId:
+                type: integer
+                format: int10
+              deviceModelDescription:
+                type: string
+  postPositionResponse:
+    type: object
+    properties:
+      ok: 
+        type: boolean
+        example: "true"
+      data:
+        type: object
+        properties:
+          id:
+            type: integer
+            format: int10
+          deviceId:
+            type: integer
+            format: int10
+          dataDatetime:
+            type: string
+            format: date
+            example: "2020-11-11T17:59:14"
+          dataLatitude: 
+            type: number
+            format: float
+          dataLongitude: 
+            type: number
+            format: float
+          dataSpeed:
+            type: number
+            format: float
+          active: 
+            type: boolean
+          logDatetime:
+            type: string
+            format: date
+            example: "2020-11-11T17:59:14"
+          logUserId:
+            type: string
+          logActionId:
+            type: integer
+            format: int10
+  UserArray:
+    type: object
+    properties:
+      ok: 
+        type: boolean
+        example: "true"
+      data:
+          type: array
+          items: 
+            type: object
+            properties:
+              userId:
+                type: integer
+                format: int10
+              userName: 
+                type: string
+              customerId:
+                type: integer
+                format: int10
+              roleId:
+                type: integer
+                format: int10
+              hash: 
+                type: string
+              hashDatetime:
+                type: string
+                format: date
+                example: "2020-11-11T17:59:14"
+servers:
+  - url: https://core-dev.metricamovil.com/geotab-driver-update/dev/api
+components:
+  parameters:
+    GLOBAL_HEADER_Authorization_OAuth:
+      name: Authorization
+      in: header
+      required: true
+      description: 'Bearer {token} for a valid token'
+      schema:
+        type: string
+  responses:
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            response:
+              value:
+                error:
+                  message:
+                    No authorization token was found | invalid signature | jwt
+                    malformed
+                  type: UnauthorizedError
+  requestBodies:
+    Credentials:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Credentials'
+  schemas:
+    LoginSuccessResponse:
+      properties:
+        token:
+          type: string
+      type: object
+    RegisterSuccessResponse:
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        updatedAt:
+          type: string
+          format: YYYY-MM-DDTHH:mm:ss.fffZ
+        createdAt:
+          type: string
+          format: YYYY-MM-DDTHH:mm:ss.fffZ
+      type: object
+    ErrorResponse:
+      properties:
+        error:
+          type: object
+          properties:
+            message:
+              type: string
+            type:
+              type: string
+      type: object
+    Credentials:
+      properties:
+        username:
+          type: string
+          maxLength: 255
+          description: Username given to get your token
+        password:
+          type: string
+          maxLength: 255
+          description: Pasword given to get your token
+      type: object
+      required:
+        - username
+        - password
+      example:
+        username: developer@metricamovil.com
+        password: mypassword123
+    DriverChange:
+      properties:
+        name:
+          type: string
+          maxLength: 255
+          description: Driver's name
+        employeeNumber:
+          type: string
+          maxLength: 255
+          description: Driver's employee number
+        device:
+          type: string
+          maxLength: 50
+          description: Device's name
+        startDate:
+          type: string
+          format: YYYY-MM-DDTHH:mm:ssZ
+          description: (OPTIONAL) Start date when the driver is going to be assigned to the device, if not set, current time will be used.
+        endDate:
+          type: string
+          format: YYYY-MM-DDTHH:mm:ssZ
+          description: (OPTIONAL) End date when the driver is going to be assigned to the device, if not set, the driver will be assigned to the device until another driver change is made. 
+          minimum: startDate
+      required:
+        - name
+        - employeeNumber
+        - device
+      example:
+        name: Mario Rodríguez
+        employeeNumber: '99991000'
+        device: Unidad Geotab 1
+        startDate: '2020-01-01T00:00:00Z'
+    DriverChangeRemove:
+      properties:
+        name:
+          type: string
+          maxLength: 255
+          description: Driver's name
+        employeeNumber:
+          type: string
+          maxLength: 255
+          description: Driver's employee number
+        device:
+          type: string
+          maxLength: 50
+          description: Device's name
+        endDate:
+          type: string
+          format: YYYY-MM-DDTHH:mm:ssZ
+          description: End date when the driver is going to be assigned to the device, if not set, current date will be used.
+      required:
+        - name
+        - employeeNumber
+        - device
+      example:
+        name: Mario Rodríguez
+        employeeNumber: '99991000'
+        device: Unidad Geotab 1
+        endDate: '2020-01-01T12:00:00Z'
+    DriverChangeSuccessResponse:
+      properties:
+        message:
+          type: string
